@@ -1,0 +1,199 @@
+==========================================================
+ Project1 项目结构说明（仅 Project1 目录）
+ 目录位置: D:\GIT\Fastapi\Project1
+ 生成日期: 2026-09-08
+==========================================================
+
+【一、先说明最重要的一件事】
+----------------------------------------------------------
+Project1 是一个"只搭好了架子、还没写代码"的 FastAPI 空壳工程。
+证据:
+  - Project1\app\ 下所有 .py 文件目前都是 0 字节空文件,
+    没有任何一行实现代码;
+  - 有实际内容的只有 requirements.txt、package.json、
+    AGENTS.md 等配置文件。
+因此下面的"每个文件做什么", 对于 app\ 内的文件 = 按目录结构
+和命名推断出的【预期职责 / 设计意图】, 而非已写好的功能。
+
+
+【二、技术选型（由配置文件看出项目规划）】
+----------------------------------------------------------
+■ requirements.txt —— Python 后端依赖, 说明这是一个带
+  MySQL + Redis 缓存的正式 Web 后端规划:
+   fastapi 0.133          Web 框架
+   starlette 0.50         ASGI 底层
+   pydantic 2.12 / pydantic-settings   数据校验 + 配置管理
+   uvicorn 0.41           启动服务器
+   sqlalchemy 2.0         ORM, 配 aiomysql(异步 MySQL 驱动)
+   passlib + bcrypt       密码哈希加密
+   redis 7.3              缓存(如新闻缓存)
+   pyclean                清理工具
+
+■ package.json —— 前端规划:
+   项目名 news; Vue 3.5 + Vite 6 (+ @vitejs/plugin-vue);
+   脚本 dev/build/preview。node_modules 里已装好这些依赖,
+   说明计划做"新闻(News)"类前后端分离项目, 前端源码目录
+   尚未创建。
+
+
+【三、Project1 完整目录结构】
+----------------------------------------------------------
+Project1\
+├── requirements.txt          # Python 依赖清单(有内容)
+├── package.json              # 前端 Vue+Vite 配置(有内容)
+├── AGENTS.md                 # AI 开发纪律说明(规则文件)
+├── .gitignore                # Git 忽略规则(当前为空)
+├── .rivet / .rivet.md / .rivet-config.json   # AI 工具链状态, 非业务
+├── node_modules\             # 前端依赖安装产物, 自动生成
+├── tests\
+│   ├── __init__.py           # 空
+│   └── test_main.http        # 空(接口测试占位)
+└── app\                      # ★ 后端源码根(全部空壳)
+    ├── main.py               # 应用入口
+    ├── api\
+    │   ├── __init__.py
+    │   ├── endpoints.py      # API 入口聚合
+    │   └── routers\
+    │       ├── __init__.py
+    │       ├── users.py      # 用户模块路由
+    │       ├── news.py       # 新闻模块路由
+    │       ├── favorite.py   # 收藏模块路由
+    │       └── history.py    # 历史记录模块路由
+    ├── core\
+    │   ├── __init__.py
+    │   ├── config\
+    │   │   ├── __init__.py
+    │   │   ├── settings.py        # 配置(环境变量)
+    │   │   └── logging_config.py  # 日志配置
+    │   ├── exception\
+    │   │   ├── __init__.py
+    │   │   ├── error_code.py      # 统一错误码
+    │   │   ├── exceptions.py      # 自定义异常类
+    │   │   └── handlers.py        # 全局异常处理器
+    │   ├── middleware\
+    │   │   ├── __init__.py
+    │   │   ├── access_log.py      # 访问日志中间件
+    │   │   └── cors.py            # 跨域中间件
+    │   └── response\
+    │       ├── __init__.py
+    │       ├── models.py          # 统一响应模型
+    │       └── utils.py           # 响应工具函数
+    ├── models\
+    │   ├── __init__.py
+    │   ├── users.py     # ORM: 用户表
+    │   ├── news.py      # ORM: 新闻表
+    │   ├── favorite.py  # ORM: 收藏表
+    │   └── history.py   # ORM: 浏览历史表
+    ├── schemas\
+    │   ├── __init__.py
+    │   ├── users.py     # Pydantic: 用户请求/响应模型
+    │   ├── news.py
+    │   ├── favorite.py
+    │   └── history.py
+    ├── crud\
+    │   ├── __init__.py
+    │   ├── users.py     # 用户增删改查
+    │   ├── news.py      # 新闻增删改查
+    │   ├── favorite.py  # 收藏增删改查
+    │   ├── history.py   # 历史增删改查
+    │   └── news_cache.py# 新闻缓存读写
+    ├── helper\
+    │   ├── __init__.py
+    │   ├── auth.py      # 认证: 签发/校验 token
+    │   ├── users.py     # 用户业务逻辑
+    │   ├── news.py
+    │   ├── favorite.py
+    │   └── history.py
+    ├── db\
+    │   ├── __init__.py
+    │   ├── session.py       # 数据库会话
+    │   └── redis_client.py  # Redis 连接
+    ├── cache\
+    │   ├── __init__.py
+    │   └── news.py      # 新闻缓存层
+    ├── utils\
+    │   ├── __init__.py
+    │   └── security.py  # 加密/解密等安全工具
+    ├── clean_pycache.py     # 清理 pycache 脚本(空)
+    └── __init__.py
+
+
+【四、app\ 各层职责逐层解释】
+----------------------------------------------------------
+■ app\main.py  程序启动入口
+  预期: 创建 FastAPI 实例、注册路由/中间件/异常处理器,
+  类似于 `uvicorn app.main:app` 启动的模块。
+
+■ app\api\  路由层(HTTP 接口定义在这层)
+  - routers\users.py  所有 /users 相关接口
+    ★ 登录/注册/获取用户信息 等接口将来写在这里(见第五部分)
+  - routers\news.py   新闻相关接口(列表/详情等)
+  - routers\favorite.py  收藏/取消收藏接口
+  - routers\history.py   浏览历史接口
+  - endpoints.py      (可选)把各 router 汇总再挂到 app
+
+■ app\core\  核心基础设施(与具体业务无关)
+  - config\settings.py       从环境变量/.env 读配置(数据库地址、
+    Redis 地址、密钥等), pydantic-settings 实现
+  - config\logging_config.py 日志格式/级别配置
+  - exception\error_code.py  统一错误码定义(如 10001=参数错)
+  - exception\exceptions.py  自定义异常类(如 BizError)
+  - exception\handlers.py    把自定义异常转成统一 JSON 响应
+  - middleware\access_log.py 记录每个请求的访问日志中间件
+  - middleware\cors.py       跨域(CORS)中间件
+  - response\models.py       统一响应体结构(如 {code,msg,data})
+  - response\utils.py        构造成功/失败响应的工具函数
+
+■ app\models\  ORM 数据表模型(对应数据库表结构)
+  users(用户) / news(新闻) / favorite(收藏) / history(历史)
+  每个类继承 SQLAlchemy Base, 定义字段与表名。
+
+■ app\schemas\  Pydantic 校验模型(接口进出参)
+  与 models\ 一一对应, 但职责不同:
+  models = 数据库表, schemas = 请求校验/响应序列化。
+
+■ app\crud\  数据访问层(直接操作数据库)
+  把"增删改查"从路由里抽出来: 路由调用 crud, crud 操作 models。
+  news_cache.py 负责把新闻数据写进/读出 Redis。
+
+■ app\helper\  业务逻辑层(比 crud 高一层的"服务层")
+  auth.py 负责登录时的密码校验与 token 签发/验证;
+  其余按业务模块编排 crud + 缓存等完成复杂逻辑。
+
+■ app\db\  连接层
+  session.py    创建 SQLAlchemy 引擎/会话(MySQL);
+  redis_client.py  创建 Redis 连接池。
+
+■ app\cache\  缓存层
+  news.py   新闻热数据缓存策略(如详情/列表先进 Redis)。
+
+■ app\utils\  通用工具
+  security.py  密码加密(bcrypt)、token 加解密等。
+  (utils 放通用函数, helper 放业务函数, 二者有分工)
+
+
+【五、重点: Login 路由在这份工程里写在哪个文件?】
+----------------------------------------------------------
+★ 结论: Project1\app\ 目前全部是 0 字节空文件,
+   所以【登录接口还没有在 Project1 里书写】★
+
+按上面的分层设计, 将来实现登录时, 代码应当写在这些文件:
+  1. Project1\app\api\routers\users.py    —— 路由层
+     书写位置示意:
+         @router.post("/login")
+         async def login(...): ...
+     (登录 = POST /users/login 或 /login, 视 API 设计而定)
+  2. Project1\app\schemas\users.py        —— 登录请求/响应模型
+     (LoginRequest: username/password, TokenResponse: token)
+  3. Project1\app\helper\auth.py          —— 认证逻辑
+     (校验用户名密码 -> 用 security 生成 token 返回)
+  4. Project1\app\crud\users.py           —— 查用户数据
+  5. Project1\app\main.py                 —— 挂载 users 路由
+     (app.include_router(users_router))
+
+即: 登录的核心"路由定义"将来应书写在
+    Project1\app\api\routers\users.py。
+
+(备注: 仓库根目录里存在一份练习版 login 实现, 位于
+ D:\GIT\Fastapi\main01.py 第 37 行 @app.post("/login"),
+ 可在实现上述正式版本时参考其逻辑。)

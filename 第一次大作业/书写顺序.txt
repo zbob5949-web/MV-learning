@@ -1,0 +1,192 @@
+# FastAPI 项目实战：目录结构与文件归属整理
+
+本文针对 CSDN《FastAPI 从入门到精通，一篇就够》中的“五、项目实战”部分，将没有标明文件位置的代码重新归类。
+
+## 一、推荐项目目录
+
+```text
+app/
+├── main.py
+├── api/
+│   ├── endpoints.py
+│   └── routers/
+│       ├── users.py
+│       ├── news.py
+│       ├── favorite.py
+│       └── history.py
+├── cache/
+│   └── news.py
+├── core/
+│   ├── config/
+│   │   ├── settings.py
+│   │   └── logging_config.py
+│   ├── exception/
+│   │   ├── error_code.py
+│   │   ├── exceptions.py
+│   │   ├── handlers.py
+│   │   └── __init__.py
+│   ├── middleware/
+│   │   ├── cors.py
+│   │   ├── access_log.py
+│   │   └── __init__.py
+│   └── response/
+│       ├── models.py
+│       └── utils.py
+├── crud/
+│   ├── users.py
+│   ├── news.py
+│   └── news_cache.py
+├── db/
+│   ├── session.py
+│   └── redis_client.py
+├── helper/
+│   ├── auth.py
+│   └── users.py
+├── models/
+│   ├── users.py
+│   ├── user_token.py
+│   ├── news.py
+│   ├── favorite.py
+│   └── history.py
+├── schemas/
+│   ├── users.py
+│   ├── news.py
+│   ├── favorite.py
+│   └── history.py
+└── utils/
+    └── security.py
+```
+
+## 二、准备工作
+
+| 小节 | 文件或位置 | 内容 |
+|---|---|---|
+| 1.1 项目介绍 | 不写代码 | 说明新闻系统、FastAPI、MySQL、SQLAlchemy、Redis |
+| 1.2 目录结构 | 创建目录和 `__init__.py` | 先搭项目骨架 |
+| 1.3 安装依赖 | 根目录 `requirements.txt` | 记录所有 Python 依赖 |
+| 1.4 导入数据库 | MySQL 终端 | 执行 `source database.sql`，不属于 Python 文件 |
+| 1.5 运行前端 | 前端项目目录 | `package.json`、`npm install`、`npm run dev` |
+
+## 三、统一认证鉴权
+
+| 小节 | 应写入文件 | 代码职责 |
+|---|---|---|
+| 2.1 用户登录路由 | `app/api/routers/users.py` | `/login`、`/info` 等接口 |
+| 2.2 创建 Token | `app/crud/users.py` | `get_token()`、`get_token_by_userid()` |
+| 2.2 Token 数据库模型 | `app/models/user_token.py` | `UserToken` 表映射 |
+| 2.3 获取当前用户 | `app/helper/auth.py` | `get_current_user()`、解析 Authorization |
+| 用户查询 | `app/crud/users.py` | `get_user_by_username()`、`get_user_by_token()`、`create_user()` |
+| 密码加密校验 | `app/utils/security.py` | `verify_password()`、密码哈希 |
+| 请求和响应模型 | `app/schemas/users.py` | `UserDTO`、用户注册/登录参数 |
+| 返回对象转换 | `app/helper/users.py` | `to_user_auth_vo()`、`to_user_info_vo()` |
+
+## 四、统一返回
+
+| 小节 | 应写入文件 | 内容 |
+|---|---|---|
+| 3.1 通用响应模型 | `app/core/response/models.py` | `BaseResponse`、`SuccessResponse`、`ErrorResponse` |
+| 3.2 返回工具函数 | `app/core/response/utils.py` | `success()`、`fail()` |
+| 3.3 使用统一返回 | 各业务路由，如 `app/api/routers/users.py` | 接口中调用 `return success(...)` |
+
+## 五、统一异常处理
+
+| 小节 | 应写入文件 | 内容 |
+|---|---|---|
+| 4.1 异常码 | `app/core/exception/error_code.py` | `ErrorCode` 枚举 |
+| 4.2 自定义异常 | `app/core/exception/exceptions.py` | `BusinessException`、用户异常、Token 异常 |
+| 4.3 异常处理器 | `app/core/exception/handlers.py` | `register_exception_handlers(app)` |
+| 4.4 抛出业务异常 | 对应业务文件，如 `app/crud/users.py` | 查询不到用户时调用 `raise_not_found()` |
+| 注册处理器 | `app/main.py` | `register_exception_handlers(app)` |
+
+`app/core/exception/__init__.py` 需要导出：
+
+```python
+from .handlers import register_exception_handlers
+```
+
+## 六、统一日志
+
+| 小节 | 应写入文件 | 内容 |
+|---|---|---|
+| 5.1 日志参数 | `app/core/config/settings.py` | `LOG_DIR`、`LOG_LEVEL`、保留天数 |
+| 5.2 日志配置 | `app/core/config/logging_config.py` | 文件日志、控制台日志、轮转和清理 |
+| 5.3 初始化日志 | `app/main.py` | 启动时调用 `setup_logging()` |
+| 5.4 使用日志 | `app/crud/news.py`、`app/crud/users.py` 等 | `logger.info()`、`logger.error()` |
+
+作者有一处路径不一致：应使用 `app/core/config/logging_config.py`，不要放成 `app/core/logging_config.py`。
+
+## 七、注册中间件
+
+| 小节 | 应写入文件 | 内容 |
+|---|---|---|
+| 6.1 跨域 | `app/core/middleware/cors.py` | `register_cors_middleware()` |
+| 6.2 访问日志 | `app/core/middleware/access_log.py` | `AccessLogMiddleware` |
+| 6.3 汇总注册 | `app/core/middleware/__init__.py` | `register_all_middlewares()` |
+| 6.4 注册到应用 | `app/main.py` | `register_all_middlewares(app)` |
+
+推荐在 `main.py` 中按以下顺序组装：
+
+```python
+setup_logging()
+app = FastAPI(...)
+register_all_middlewares(app)
+register_exception_handlers(app)
+app.include_router(api_endpoint_router, prefix=settings.API_PREFIX)
+```
+
+## 八、统一参数校验
+
+| 小节 | 应写入文件 | 内容 |
+|---|---|---|
+| 7.1 拦截校验异常 | `app/core/exception/handlers.py` | 处理 `RequestValidationError` |
+| 7.2 自定义 422 异常 | `app/core/exception/exceptions.py` | `raise_unprocessable_entity()` |
+| 7.3 DTO 校验 | `app/schemas/users.py` | `PwdUpdateDTO`、`Field`、`field_validator`、`model_validator` |
+| 其它业务校验 | 对应 Schema 文件 | 新闻、收藏、历史记录分别放各自文件 |
+
+字段约束和 Pydantic 校验器应放在 `schemas`，不应塞进路由或 CRUD 文件。
+
+## 九、缓存策略
+
+| 小节 | 应写入文件 | 内容 |
+|---|---|---|
+| 8.1 Redis 参数 | `app/core/config/settings.py` | Redis 地址、端口、密码、前缀、超时 |
+| 8.2 Redis 通用工具 | `app/db/redis_client.py` | `get_cache()`、`set_cache()`、`delete_cache()` |
+| 8.3 新闻缓存函数 | `app/cache/news.py` | 缓存 Key、过期时间、新闻缓存读写函数 |
+| 8.4 业务中调用缓存 | `app/crud/news_cache.py` 或 `app/crud/news.py` | 先查 Redis，未命中再查数据库 |
+
+缓存调用链：
+
+```text
+路由
+  -> CRUD
+  -> cache/news.py
+  -> db/redis_client.py
+  -> Redis
+```
+
+## 十、文章中需要修正的错误
+
+1. `logging_config.py` 路径前后不一致，应统一为 `app/core/config/logging_config.py`。
+2. 代码调用了 `raise_business_error()`，但定义的是 `raise_business_exception()`，名称要统一。
+3. `main.py` 使用了 `settings.DEBUG`、`settings.LOGGING_LEVEL`，而配置示例定义的是 `RELOAD`、`LOG_LEVEL`，需要统一。
+4. `status.HTTP_422_UNPROCESSABLE_CONTENT` 通常应改为 `status.HTTP_422_UNPROCESSABLE_ENTITY`。
+5. `ErrorCode.FAILURE` 和 `ErrorCode.USER_EXIST` 使用了重复业务码 `50001`，需要改成不同编码。
+6. `UserToken` 没有出现在作者目录中，建议新增 `app/models/user_token.py`。
+7. `to_user_auth_vo()`、`to_user_info_vo()` 没有定义位置，建议放到 `app/helper/users.py`。
+8. `get_user_by_token()`、`get_token_by_userid()`、`create_user()` 应放到 `app/crud/users.py`。
+
+## 十一、建议执行顺序
+
+```text
+创建目录
+→ 编写 settings.py
+→ 编写 models 和 schemas
+→ 编写 db/session.py
+→ 编写 crud
+→ 编写 helper/auth.py
+→ 编写统一响应
+→ 编写异常体系
+→ 编写中间件
+→ 编写 Redis 缓存
+→ 最后组装 main.py 和各业务路由
+```

@@ -1,0 +1,15 @@
+{
+  "width": 6048,
+  "height": 4024,
+  "rgb_mean": [
+    33.311,
+    53.204,
+    46.451
+  ],
+  "gray_mean": 49.314,
+  "gray_std_contrast": 47.02,
+  "laplacian_variance_sharpness": 205.041,
+  "lab_background_a_offset": -38.411,
+  "lab_background_b_offset": 1.804,
+  "illumination_nonuniformity": 5.0499
+}
